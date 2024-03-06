@@ -1,2 +1,3 @@
 # OllamaClient
-Python client for Ollama service
+
+# Python client for Ollama service  
