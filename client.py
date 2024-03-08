@@ -1,10 +1,11 @@
-import json, requests, threading, os
+import json, requests, threading, os, time
 
 class client():
-
+    flag = False
     msgs = []
     model = ""
     host = ""
+    output = ""
 
     def __init__(self):
         self.model = "dolphin-phi"
@@ -48,17 +49,39 @@ class client():
                 self.chat()
 
     def chat(self):
+        self.flag = True
+        thread_post = threading.Thread(target = self.postMsgs)
+        thread_stream = threading.Thread(target = self.updateMsg)
+        thread_post.start()
+        thread_stream.start()
+        while self.flag:
+            time.sleep(1)
+        self.msgs.append({
+                            "role": "assistant", 
+                            "content": self.output
+                        })
+        self.draw()
+
+    def updateMsg(self):
+        msgtmp = ""
+        while self.flag:
+            time.sleep(0.5)
+            if msgtmp != self.output:
+                print(f"{self.output[len(msgtmp):]}", end = "")
+                msgtmp = self.output
+
+    def postMsgs(self):
+        self.output = ""
         r = requests.post(
                 self.host + "/chat", 
                 json = {
                         "model": self.model, 
                         "messages": self.msgs, 
                         "stream": True
-                    }
+                    }, 
+                stream = True
             )
         r.raise_for_status()
-        output = ""
-        print()
         for line in r.iter_lines():
             body = json.loads(line)
             if "error" in body:
@@ -66,14 +89,11 @@ class client():
             if body.get("done") is False:
                 message = body.get("message", "")
                 content = message.get("content", "")
-                output += content
+                self.output += content
             if body.get("done", False):
-                message["content"] = output
-        self.msgs.append({
-                            "role": "assistant", 
-                            "content": output
-                        })
-        self.draw()
+                message["content"] = self.output
+                self.flag = False
+
     
     def draw(self):
         os.system("clear")
