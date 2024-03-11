@@ -12,7 +12,9 @@
   
 Use Python3.x to run this script  
 Must have python module 'requests' pre-installed  
-`pip install requests`  
+```bash
+pip install requests
+```  
   
 type prompt to interact, using "dolphin-phi" model by default  
 type '/[command]' to use functions, type '/help' or '/?' to see useage  
